@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 
-// Password-protects every page and the data API with HTTP Basic Auth.
-// Set DASHBOARD_PASSWORD (and optionally DASHBOARD_USER, default "powerplay") in Vercel.
+// Optional password. If DASHBOARD_PASSWORD is set in Vercel, every page and the data API ask for it
+// (username DASHBOARD_USER, default "powerplay"). If it is not set, the dashboard is open to anyone with the link.
 export function proxy(request) {
   const password = process.env.DASHBOARD_PASSWORD;
-  const user = process.env.DASHBOARD_USER || 'powerplay';
   if (!password) {
-    return new NextResponse('DASHBOARD_PASSWORD is not set. Add it in Vercel → Project → Settings → Environment Variables, then redeploy.', { status: 503 });
+    const res = NextResponse.next();
+    res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return res;
   }
+  const user = process.env.DASHBOARD_USER || 'powerplay';
   const header = request.headers.get('authorization') || '';
   if (header.startsWith('Basic ')) {
     try {
